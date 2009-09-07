@@ -66,6 +66,7 @@ toAdd x =
     [ ((modMask x, xK_s), sendMessage NextLayout)
     , ((modMask x, xK_w), kill)
     , ((modMask x, xK_space), spawn "dlaunch")
+    , ((mod4Mask,  xK_space), spawn "roxterm")
     --XF86Launch1 :1008FF41
     , ((0 , 0x1008FF41), spawn "blank")
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
@@ -125,7 +126,7 @@ main = do
                      , modMask            = modMask'
                      , logHook            = do
                                               ewmhDesktopsLogHook
-                                              dynamicLogWithPP (alexPP din)
+                                              --dynamicLogWithPP (alexPP din)
                                               fadeInactiveLogHook 0xaaffffff
                      , borderWidth        = 1
                      -- , keys            = \c -> keys' `M.union` keys defaultConfig c
