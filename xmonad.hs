@@ -60,6 +60,7 @@ toRemove x =
     [ (modMask x              , xK_period)
     , (modMask x              , xK_p     )
     , (modMask x .|. shiftMask, xK_p     )
+    , (modMask x              , xK_r     )
     ]
 -- These are my personal key bindings
 toAdd x =
