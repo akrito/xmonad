@@ -73,25 +73,23 @@ toAdd x =
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
     ]
 
-myWorkspaces    = map show [1..6]
+myWorkspaces = map show [1..6]
 
-alexPP :: Handle -> PP
-alexPP h = defaultPP {
-                     ppCurrent  = \x -> "^fg(black)^bg(white) " ++ x ++ " "
-                   , ppVisible  = \x -> "^fg(white)^bg(black) " ++ x ++ " "
-                   , ppHidden   = \x -> "^fg(white)^bg(black) " ++ x ++ " "
+alexPP = defaultPP {
+                     ppCurrent  = \x -> "[" ++ x ++ "]"
+                   , ppVisible  = \x -> " " ++ x ++ " "
+                   , ppHidden   = \x -> " " ++ x ++ " "
                    , ppHiddenNoWindows = const ""
                    , ppWsSep    = ""
                    , ppSep      = ""
-                   , ppLayout   = dzenColor "white" "black" .
-                                  (\x -> case x of
-                                            "Hinted Full"          -> "  ^i(/home/alex/images/bitmaps/full.xbm)"
-                                            "Hinted Tall"          -> "  ^i(/home/alex/images/bitmaps/tall.xbm)"
-                                            "Hinted Fair"          -> "  ^i(/home/alex/images/bitmaps/fair.xbm)"
-                                            _                      -> "  " ++ x
+                   , ppLayout   = (\x -> case x of
+                                            "Hinted Full" -> " [ ]"
+                                            "Hinted Tall" -> ""
+                                            "Hinted Fair" -> ""
+                                            _             -> " " ++ x
                                   )
-                   , ppTitle    = \x -> ""
-                   , ppOutput   = hPutStrLn h
+                   , ppTitle    = const ""
+                   , ppOutput   = (writeFile "/home/alex/tmp/xmonadfifo") . ("^_^ " ++)
                    }
 
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
@@ -111,13 +109,8 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       nextNonEmptyWS = \_ -> moveTo Next NonEmptyWS
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
---no xft
---statusBarCmd = "dzen2 -ta l -tw 180 -bg black -fg white -fn '-*-proggyclean-*-*-*-*-*-*-*-*-*-*-*-*' -e 'button5=exec:desknext;button4=exec:deskprev'"
---with xft
-statusBarCmd = "dzen2 -ta l -tw 300 -bg black -fg white -fn 'DejaVu Sans Mono-8' -e 'button5=exec:desknext;button4=exec:deskprev'"
-
 main = do
-  din <- spawnPipe statusBarCmd
+  spawn "caw"
   xmonad $ defaultConfig
                      { layoutHook         = layout'
                      -- #adff2f is yellow-green
@@ -127,8 +120,8 @@ main = do
                      , modMask            = modMask'
                      , logHook            = do
                                               ewmhDesktopsLogHook
-                                              --dynamicLogWithPP (alexPP din)
-                                              fadeInactiveLogHook 0xaaffffff
+                                              dynamicLogWithPP alexPP
+                                              fadeInactiveLogHook 0xccffffff
                      , borderWidth        = 1
                      -- , keys            = \c -> keys' `M.union` keys defaultConfig c
                      , keys               = newKeys
