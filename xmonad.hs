@@ -73,7 +73,7 @@ toAdd x =
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
     ]
 
-myWorkspaces    = ["1","2","3","4","5","6"]
+myWorkspaces    = map show [1..6]
 
 alexPP :: Handle -> PP
 alexPP h = defaultPP {
