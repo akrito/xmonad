@@ -38,7 +38,6 @@ data Fair a = Fair { fairRatio :: !Rational
 
 instance LayoutClass Fair a where
     description _ = "Fair"
-
     pureLayout (Fair delta frac) r s = pureLayout (Tall nmaster delta frac) r s
       where
         n = length $ W.integrate s
@@ -60,7 +59,12 @@ toRemove x =
     [ (modMask x              , xK_period)
     , (modMask x              , xK_p     )
     , (modMask x .|. shiftMask, xK_p     )
+    , (modMask x              , xK_n     )
     , (modMask x              , xK_r     )
+    , (modMask x              , xK_k     )
+    , (modMask x              , xK_j     )
+    , (modMask x              , xK_h     )
+    , (modMask x              , xK_l     )
     ]
 -- These are my personal key bindings
 toAdd x =
@@ -71,26 +75,13 @@ toAdd x =
     --XF86Launch1 :1008FF41
     , ((0 , 0x1008FF41), spawn "blank")
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
+    , ((mod4Mask, xK_i), windows W.focusUp)
+    , ((mod4Mask, xK_k), windows W.focusDown)
+    , ((mod4Mask, xK_j), sendMessage Shrink)
+    , ((mod4Mask, xK_l), sendMessage Expand)
     ]
 
 myWorkspaces = map show [1..6]
-
-alexPP = defaultPP {
-                     ppCurrent  = \x -> "[" ++ x ++ "]"
-                   , ppVisible  = \x -> " " ++ x ++ " "
-                   , ppHidden   = \x -> " " ++ x ++ " "
-                   , ppHiddenNoWindows = const ""
-                   , ppWsSep    = ""
-                   , ppSep      = ""
-                   , ppLayout   = (\x -> case x of
-                                            "Hinted Full" -> " [ ]"
-                                            "Hinted Tall" -> ""
-                                            "Hinted Fair" -> ""
-                                            _             -> " " ++ x
-                                  )
-                   , ppTitle    = const ""
-                   , ppOutput   = (writeFile "/home/alex/tmp/xmonadfifo") . ("^_^ " ++)
-                   }
 
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-button1, Set the window to floating mode and move by dragging
@@ -110,7 +101,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
 main = do
-  spawn "caw"
+  spawn "xfce4-panel"
   xmonad $ defaultConfig
                      { layoutHook         = layout'
                      -- #adff2f is yellow-green
@@ -120,10 +111,8 @@ main = do
                      , modMask            = modMask'
                      , logHook            = do
                                               ewmhDesktopsLogHook
-                                              dynamicLogWithPP alexPP
-                                              fadeInactiveLogHook 0xccffffff
+                                              fadeInactiveLogHook 0xcc000000
                      , borderWidth        = 1
-                     -- , keys            = \c -> keys' `M.union` keys defaultConfig c
                      , keys               = newKeys
                      , mouseBindings     = myMouseBindings
                      , workspaces        = myWorkspaces
