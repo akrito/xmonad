@@ -57,28 +57,28 @@ newKeys x  = foldr (uncurry M.insert) (delKeys x) (toAdd    x)
 -- remove some of the default key bindings
 toRemove x =
     [ (modMask x              , xK_period)
-    , (modMask x              , xK_p     )
-    , (modMask x .|. shiftMask, xK_p     )
-    , (modMask x              , xK_n     )
-    , (modMask x              , xK_r     )
+    -- these conflict with ergoemacs
     , (modMask x              , xK_k     )
     , (modMask x              , xK_j     )
     , (modMask x              , xK_h     )
     , (modMask x              , xK_l     )
+    , (modMask x              , xK_q     )
+    , (modMask x              , xK_w     )
     ]
 -- These are my personal key bindings
 toAdd x =
     [ ((modMask x, xK_s), sendMessage NextLayout)
-    , ((modMask x, xK_w), kill)
+    , ((mod4Mask,  xK_w), kill)
+    , ((mod4Mask,  xK_q), spawn "xmonad --recompile; xmonad --restart")
     , ((modMask x, xK_space), spawn "dlaunch")
     , ((mod4Mask,  xK_space), spawn "roxterm")
     --XF86Launch1 :1008FF41
     , ((0 , 0x1008FF41), spawn "blank")
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
-    , ((mod4Mask, xK_i), windows W.focusUp)
-    , ((mod4Mask, xK_k), windows W.focusDown)
-    , ((mod4Mask, xK_j), sendMessage Shrink)
-    , ((mod4Mask, xK_l), sendMessage Expand)
+    , ((mod4Mask,  xK_i), windows W.focusUp)
+    , ((mod4Mask,  xK_k), windows W.focusDown)
+    , ((mod4Mask,  xK_j), sendMessage Shrink)
+    , ((mod4Mask,  xK_l), sendMessage Expand)
     ]
 
 myWorkspaces = map show [1..6]
