@@ -32,8 +32,8 @@ layout' = smartBorders $ layoutHints $ avoidStruts $ fair ||| Full
     ratio   = 1/2
     delta   = 3/100
 
--- A tweak to the Tall layout whereby the number of windows in the master area
--- is calculated on the fly
+-- A tweak to the Tall layout where the number of windows in the master area is
+-- calculated on the fly
 data Fair a = Fair { fairRatio :: !Rational
                    , fairRatioIncrement :: !Rational }
                 deriving (Show, Read)
