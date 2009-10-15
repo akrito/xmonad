@@ -10,6 +10,7 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.CycleRecentWS
 import XMonad.Layout
 import XMonad.Layout.NoBorders
+import XMonad.Layout.ThreeColumns
 import XMonad.Util.Run
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
@@ -26,6 +27,7 @@ layout' = smartBorders $ layoutHints $ avoidStruts $ fair ||| Full
   where
     tiled   = Tall nmaster delta ratio
     fair    = Fair delta ratio
+    three   = ThreeCol 1 (3/100) (1/2)
     nmaster = 1
     ratio   = 1/2
     delta   = 3/100
@@ -75,10 +77,12 @@ toAdd x =
     --XF86Launch1 :1008FF41
     , ((0 , 0x1008FF41), spawn "blank")
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
-    , ((mod4Mask,  xK_i), windows W.focusUp)
-    , ((mod4Mask,  xK_k), windows W.focusDown)
-    , ((mod4Mask,  xK_j), sendMessage Shrink)
+    , ((mod4Mask,  xK_k), windows W.focusUp)
+    , ((mod4Mask,  xK_j), windows W.focusDown)
+    , ((mod4Mask,  xK_h), sendMessage Shrink)
     , ((mod4Mask,  xK_l), sendMessage Expand)
+    , ((mod4Mask,  xK_period), sendMessage (IncMasterN (-1)))
+    , ((mod4Mask,  xK_comma ), sendMessage (IncMasterN 1))
     ]
 
 myWorkspaces = map show [1..6]
