@@ -105,7 +105,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
 main = do
-  spawn "xfce4-panel"
+  spawn "caw"
   xmonad $ defaultConfig
                      { layoutHook         = layout'
                      -- #adff2f is yellow-green
