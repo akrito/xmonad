@@ -58,18 +58,20 @@ delKeys x  = foldr M.delete           (defKeys x) (toRemove x)
 newKeys x  = foldr (uncurry M.insert) (delKeys x) (toAdd    x)
 -- remove some of the default key bindings
 toRemove x =
-    [ (modMask x              , xK_period)
     -- these conflict with ergoemacs
-    , (modMask x              , xK_k     )
+    [ (modMask x              , xK_k     )
     , (modMask x              , xK_j     )
     , (modMask x              , xK_h     )
     , (modMask x              , xK_l     )
     , (modMask x              , xK_q     )
     , (modMask x              , xK_w     )
+    , (modMask x              , xK_r     )
+    , (modMask x              , xK_e     )
+    , (modMask x              , xK_period     )
     ]
 -- These are my personal key bindings
 toAdd x =
-    [ ((modMask x, xK_s), sendMessage NextLayout)
+    [ ((mod4Mask,  xK_s), sendMessage NextLayout)
     , ((mod4Mask,  xK_w), kill)
     , ((mod4Mask,  xK_q), spawn "xmonad --recompile; xmonad --restart")
     , ((modMask x, xK_space), spawn "dlaunch")
