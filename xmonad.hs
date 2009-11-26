@@ -20,6 +20,7 @@ import qualified Data.Map as M
 import Data.Bits ((.|.))
 import Data.Ratio
 import System.IO
+import XMonad.Actions.GridSelect
 
 myHandleEventHook = ewmhDesktopsEventHook
 
@@ -51,40 +52,18 @@ instance LayoutClass Fair a where
       where resize Shrink             = Fair delta (max 0 $ frac-delta)
             resize Expand             = Fair delta (min 1 $ frac+delta)
 
-modMask' = mod1Mask
+modMask' = mod4Mask
 
 defKeys    = keys defaultConfig
-delKeys x  = foldr M.delete           (defKeys x) (toRemove x)
-newKeys x  = foldr (uncurry M.insert) (delKeys x) (toAdd    x)
--- remove some of the default key bindings
-toRemove x =
-    -- these conflict with ergoemacs
-    [ (modMask x              , xK_k     )
-    , (modMask x              , xK_j     )
-    , (modMask x              , xK_h     )
-    , (modMask x              , xK_l     )
-    , (modMask x              , xK_q     )
-    , (modMask x              , xK_w     )
-    , (modMask x              , xK_r     )
-    , (modMask x              , xK_e     )
-    , (modMask x              , xK_period     )
-    ]
+newKeys x  = foldr (uncurry M.insert) (defKeys x) (toAdd    x)
 -- These are my personal key bindings
 toAdd x =
-    [ ((mod4Mask,  xK_s), sendMessage NextLayout)
-    , ((mod4Mask,  xK_w), kill)
-    , ((mod4Mask,  xK_q), spawn "xmonad --recompile; xmonad --restart")
+    [ ((modMask x,  xK_s), sendMessage NextLayout)
+    , ((modMask x,  xK_w), kill)
     , ((modMask x, xK_space), spawn "dlaunch")
-    , ((mod4Mask,  xK_space), spawn "roxterm")
-    --XF86Launch1 :1008FF41
     , ((0 , 0x1008FF41), spawn "blank")
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
-    , ((mod4Mask,  xK_k), windows W.focusUp)
-    , ((mod4Mask,  xK_j), windows W.focusDown)
-    , ((mod4Mask,  xK_h), sendMessage Shrink)
-    , ((mod4Mask,  xK_l), sendMessage Expand)
-    , ((mod4Mask,  xK_period), sendMessage (IncMasterN (-1)))
-    , ((mod4Mask,  xK_comma ), sendMessage (IncMasterN 1))
+    , ((modMask x, xK_g), goToSelected defaultGSConfig)
     ]
 
 myWorkspaces = map show [1..6]
@@ -107,7 +86,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
 main = do
-  spawn "caw"
+  spawn "xfce4-panel"
   xmonad $ defaultConfig
                      { layoutHook         = layout'
                      -- #adff2f is yellow-green
