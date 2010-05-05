@@ -16,26 +16,50 @@ import qualified Data.Map as M
 import Data.Bits ((.|.))
 import Data.Ratio
 import System.IO
+import Control.Monad (msum)
 
-layout' = smartBorders $ layoutHints $ avoidStruts $ mouseResizableTile ||| Full
+layout' = smartBorders $ layoutHints $ avoidStruts $ fair ||| Full
+    where
+      fair = Fair delta ratio
+      ratio = 1/2
+      delta = 3/100
 
 -- A tweak to the Tall layout where the number of windows in the master area is
 -- calculated on the fly
+data Fair a = Fair { fairRatio :: !Rational
+                   , fairRatioIncrement :: !Rational }
+                deriving (Show, Read)
+
+instance LayoutClass Fair a where
+    description _ = "Fair"
+
+    pureLayout (Fair delta frac) r s = pureLayout (Tall nmaster delta frac) r s
+      where
+        n = length $ W.integrate s
+        nmaster = floor $ fromIntegral n / 2
+
+    pureMessage (Fair delta frac) m =
+            msum [fmap resize     (fromMessage m)]
+
+      where resize Shrink             = Fair delta (max 0 $ frac-delta)
+            resize Expand             = Fair delta (min 1 $ frac+delta)
 
 modMask' = mod4Mask
 
 defKeys    = keys defaultConfig
-newKeys x  = foldr (uncurry M.insert) (defKeys x) (toAdd    x)
--- These are my personal key bindings
+delKeys x  = foldr M.delete           (defKeys x) (toRemove x)
+newKeys x  = foldr (uncurry M.insert) (delKeys x) (toAdd    x)
 toAdd x =
     [ ((modMask x,  xK_s), sendMessage NextLayout)
     , ((modMask x,  xK_w), kill)
-    , ((modMask x, xK_space), spawn "dlaunch")
+--    , ((modMask x, xK_space), spawn "dlaunch")
     , ((0 , 0x1008FF41), spawn "blank")
     , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
     ]
+toRemove XConfig{modMask = modm} =
+    [ (modm              , xK_space ) ]
 
-myWorkspaces = map show [1..6]
+myWorkspaces = map show [1..4]
 
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-button1, Set the window to floating mode and move by dragging
@@ -52,22 +76,29 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       nextNonEmptyWS = \_ -> moveTo Next NonEmptyWS
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
+--gnomeDoManageHook :: ManageHook
+--gnomeDoManageHook = 
+--    composeOne [ resource  =? "Do"   --> doIgnore ]
+
 main = do
-  spawn "xfce4-panel"
+--  spawn "xfce4-panel"
   xmonad $ ewmh defaultConfig
                      { layoutHook         = layout'
                      -- #adff2f is yellow-green
                      -- #a4c98b is neutral green
                      -- #147427 is darker green
                      , normalBorderColor  = "#888888"
-                     , focusedBorderColor = "#147427"
+                     , focusedBorderColor = "#adff2f"
                      , modMask            = modMask'
-                     , logHook            = do
-                                              fadeInactiveLogHook 0xaa000000
-                     , focusFollowsMouse  = False
+--                     , logHook            = do
+--                                              fadeInactiveLogHook 0xaa000000
+--                     , focusFollowsMouse  = False
                      , borderWidth        = 2
-                     , keys               = newKeys
+                     , keys              = newKeys
                      , mouseBindings     = myMouseBindings
                      , workspaces        = myWorkspaces
-                     , manageHook = composeOne [isFullscreen -?> doFullFloat] <+> manageDocks
+                     , manageHook = composeAll [
+                         isFullscreen --> doFullFloat,
+                         className =? "/usr/lib/gnome-do/Do.exe" --> doIgnore
+                         ] <+> manageDocks
                      }
