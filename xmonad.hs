@@ -5,10 +5,8 @@ import XMonad.Hooks.ManageHelpers
 import XMonad.Layout.LayoutHints
 import qualified XMonad.StackSet as W
 import XMonad.Actions.CycleWS
-import XMonad.Actions.CycleRecentWS
 import XMonad.Layout
 import XMonad.Layout.NoBorders
-import XMonad.Layout.MouseResizableTile
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.FadeInactive
@@ -53,9 +51,6 @@ newKeys x  = foldr (uncurry M.insert) (delKeys x) (toAdd    x)
 toAdd x =
     [ ((modMask x,  xK_s), sendMessage NextLayout)
     , ((modMask x,  xK_w), kill)
---    , ((modMask x, xK_space), spawn "dlaunch")
-    , ((0 , 0x1008FF41), spawn "blank")
-    , ((modMask x, xK_Tab), cycleRecentWS [xK_Alt_L] xK_Tab xK_grave)
     ]
 toRemove XConfig{modMask = modm} =
     [ (modm              , xK_space ) ]
@@ -91,9 +86,8 @@ conf = ewmh defaultConfig
                      , normalBorderColor  = "#888888"
                      , focusedBorderColor = "#adff2f"
                      , modMask            = modMask'
---                     , logHook            = do
---                                              fadeInactiveLogHook 0xaa000000
---                     , focusFollowsMouse  = False
+                     -- , logHook            = do
+                     --     fadeInactiveLogHook 0xaa000000
                      , borderWidth        = 2
                      , keys              = newKeys
                      , mouseBindings     = myMouseBindings
