@@ -93,7 +93,6 @@ conf = ewmh defaultConfig
                      , mouseBindings     = myMouseBindings
                      , workspaces        = myWorkspaces
                      , manageHook = composeAll [
-                         isFullscreen --> doFullFloat,
-                         className =? "/usr/lib/gnome-do/Do.exe" --> doIgnore
+                         isFullscreen --> doFullFloat
                          ] <+> manageDocks
                      }
