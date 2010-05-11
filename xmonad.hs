@@ -9,7 +9,6 @@ import XMonad.Layout
 import XMonad.Layout.NoBorders
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.FadeInactive
 import qualified Data.Map as M
 import Data.Bits ((.|.))
 import Data.Ratio
@@ -86,8 +85,6 @@ conf = ewmh defaultConfig
                      , normalBorderColor  = "#888888"
                      , focusedBorderColor = "#adff2f"
                      , modMask            = modMask'
-                     -- , logHook            = do
-                     --     fadeInactiveLogHook 0xaa000000
                      , borderWidth        = 2
                      , keys              = newKeys
                      , mouseBindings     = myMouseBindings
