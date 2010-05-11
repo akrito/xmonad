@@ -17,6 +17,7 @@ import Data.Bits ((.|.))
 import Data.Ratio
 import System.IO
 import Control.Monad (msum)
+import XMonad.Hooks.SetWMName
 
 layout' = smartBorders $ layoutHints $ avoidStruts $ fair ||| Full
     where
@@ -76,13 +77,13 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       nextNonEmptyWS = \_ -> moveTo Next NonEmptyWS
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
---gnomeDoManageHook :: ManageHook
---gnomeDoManageHook = 
---    composeOne [ resource  =? "Do"   --> doIgnore ]
-
 main = do
---  spawn "xfce4-panel"
-  xmonad $ ewmh defaultConfig
+  xmonad conf
+       { startupHook = startupHook conf >> setWMName "LG3D"
+       }
+
+
+conf = ewmh defaultConfig
                      { layoutHook         = layout'
                      -- #adff2f is yellow-green
                      -- #a4c98b is neutral green
