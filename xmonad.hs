@@ -6,9 +6,12 @@ import XMonad.Layout.LayoutHints
 import qualified XMonad.StackSet as W
 import XMonad.Actions.CycleWS
 import XMonad.Layout
+import XMonad.Layout.BoringWindows
+import XMonad.Layout.Minimize
 import XMonad.Layout.NoBorders
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.RestoreMinimized
 import qualified Data.Map as M
 import Data.Bits ((.|.))
 import Data.Ratio
@@ -16,7 +19,7 @@ import System.IO
 import Control.Monad (msum)
 import XMonad.Hooks.SetWMName
 
-layout' = smartBorders $ layoutHints $ avoidStruts $ fair ||| Full
+layout' = smartBorders $ layoutHints $ avoidStruts $ boringWindows $ minimize $ fair ||| Full
     where
       fair = Fair delta ratio
       ratio = 1/2
@@ -48,13 +51,18 @@ defKeys    = keys defaultConfig
 delKeys x  = foldr M.delete           (defKeys x) (toRemove x)
 newKeys x  = foldr (uncurry M.insert) (delKeys x) (toAdd    x)
 toAdd x =
-    [ ((modMask x,  xK_s), sendMessage NextLayout)
-    , ((modMask x,  xK_w), kill)
+    [ ((modMask x, xK_s), sendMessage NextLayout)
+    , ((modMask x, xK_w), kill)
+    -- These don't work in the Full layout
+    , ((modMask x, xK_j), focusDown)
+    , ((modMask x, xK_k), focusUp)
+    , ((modMask x, xK_m), withFocused (\f -> sendMessage (MinimizeWin f)))
+    , ((modMask x .|. shiftMask, xK_m), sendMessage RestoreNextMinimizedWin)
     ]
 toRemove XConfig{modMask = modm} =
     [ (modm              , xK_space ) ]
 
-myWorkspaces = map show [1..4]
+myWorkspaces = map show [1..5]
 
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-button1, Set the window to floating mode and move by dragging
@@ -82,8 +90,9 @@ conf = ewmh defaultConfig
                      -- #adff2f is yellow-green
                      -- #a4c98b is neutral green
                      -- #147427 is darker green
+                     -- #ea551c is burnt orange
                      , normalBorderColor  = "#888888"
-                     , focusedBorderColor = "#adff2f"
+                     , focusedBorderColor = "#ea551c"
                      , modMask            = modMask'
                      , borderWidth        = 2
                      , keys              = newKeys
@@ -92,4 +101,5 @@ conf = ewmh defaultConfig
                      , manageHook = composeAll [
                          isFullscreen --> doFullFloat
                          ] <+> manageDocks
+                     , handleEventHook = restoreMinimizedEventHook
                      }
