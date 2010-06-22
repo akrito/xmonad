@@ -9,6 +9,7 @@ import XMonad.Layout
 import XMonad.Layout.BoringWindows
 import XMonad.Layout.Minimize
 import XMonad.Layout.NoBorders
+import XMonad.Layout.Simplest
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.RestoreMinimized
@@ -19,7 +20,7 @@ import System.IO
 import Control.Monad (msum)
 import XMonad.Hooks.SetWMName
 
-layout' = smartBorders $ layoutHints $ avoidStruts $ boringWindows $ minimize $ fair ||| Full
+layout' = smartBorders $ layoutHints $ avoidStruts $ boringAuto $ minimize $ fair ||| Simplest
     where
       fair = Fair delta ratio
       ratio = 1/2
