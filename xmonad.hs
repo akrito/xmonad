@@ -1,7 +1,11 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, DeriveDataTypeable #-}
 import XMonad
+import XMonad.Config.Gnome
+import XMonad.Config.Xfce
 import XMonad.Operations
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.FadeInactive
+-- import XMonad.Hooks.ManageHelpers
 import XMonad.Layout.LayoutHints
 import qualified XMonad.StackSet as W
 import XMonad.Actions.CycleWS
@@ -10,17 +14,18 @@ import XMonad.Layout.BoringWindows
 import XMonad.Layout.Minimize
 import XMonad.Layout.NoBorders
 import XMonad.Layout.Simplest
+import XMonad.Layout.Spacing
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.RestoreMinimized
+--import XMonad.Hooks.RestoreMinimized
 import qualified Data.Map as M
 import Data.Bits ((.|.))
 import Data.Ratio
 import System.IO
 import Control.Monad (msum)
-import XMonad.Hooks.SetWMName
+--import XMonad.Hooks.SetWMName
 
-layout' = smartBorders $ layoutHints $ avoidStruts $ boringAuto $ minimize $ fair ||| Simplest
+layout' = smartBorders $ layoutHints $ avoidStruts $ boringAuto $ minimize $ spacing 2 $ fair ||| Simplest
     where
       fair = Fair delta ratio
       ratio = 1/2
@@ -57,13 +62,13 @@ toAdd x =
     -- These don't work in the Full layout
     , ((modMask x, xK_j), focusDown)
     , ((modMask x, xK_k), focusUp)
-    , ((modMask x, xK_m), withFocused (\f -> sendMessage (MinimizeWin f)))
-    , ((modMask x .|. shiftMask, xK_m), sendMessage RestoreNextMinimizedWin)
+--    , ((modMask x, xK_m), withFocused (\f -> sendMessage (MinimizeWin f)))
+--    , ((modMask x .|. shiftMask, xK_m), sendMessage RestoreNextMinimizedWin)
     ]
 toRemove XConfig{modMask = modm} =
     [ (modm              , xK_space ) ]
 
-myWorkspaces = map show [1..5]
+myWorkspaces = map show [1..4]
 
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-button1, Set the window to floating mode and move by dragging
@@ -80,27 +85,60 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       nextNonEmptyWS = \_ -> moveTo Next NonEmptyWS
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
-main = do
-  xmonad conf
-       { startupHook = startupHook conf >> setWMName "LG3D"
+myLogHook :: X ()
+myLogHook = fadeInactiveLogHook fadeAmount
+    where fadeAmount = 0x99999999
+
+
+-- main = do
+--   xmonad conf
+--        { startupHook = startupHook conf >> setWMName "LG3D"
+--        }
+
+-- gnomeManageHook = composeAll (
+--     [ manageHook gnomeConfig
+--     , className =? "Unity-2d-panel" --> doIgnore
+--     , className =? "Unity-2d-launcher" --> doFloat
+--     ])
+
+gnomeManageHook = composeAll ([manageHook gnomeConfig, isFullscreen --> doFullFloat])
+
+-- conf = ewmh defaultConfig
+--                      { layoutHook         = layout'
+--                      -- #adff2f is yellow-green
+--                      -- #a4c98b is neutral green
+--                      -- #147427 is darker green
+--                      -- #ea551c is burnt orange
+--                      -- #4698F0 is blue
+--                      , normalBorderColor  = "#888888"
+--                      , focusedBorderColor = "#4698F0"
+--                      , modMask            = modMask'
+--                      , borderWidth        = 2
+--                      , keys              = newKeys
+--                      , mouseBindings     = myMouseBindings
+--                      , workspaces        = myWorkspaces
+                                           
+--                      , manageHook = composeAll [
+--                          isFullscreen --> doFullFloat
+--                          ] <+> manageDocks
+--                      , handleEventHook = restoreMinimizedEventHook
+--                      }
+
+main = xmonad gnomeConfig
+       { manageHook    = gnomeManageHook
+       , modMask       = modMask'
+       , keys          = newKeys
+       , mouseBindings = myMouseBindings
+       , layoutHook    = layout'
+       , logHook       = myLogHook
+       , borderWidth   = 0
        }
 
+-- main = xmonad xfceConfig
+--        { modMask = modMask'
+--        , keys = newKeys
+--        , mouseBindings = myMouseBindings
+--        , layoutHook = layout'
+--        , workspaces = myWorkspaces
+--        }
 
-conf = ewmh defaultConfig
-                     { layoutHook         = layout'
-                     -- #adff2f is yellow-green
-                     -- #a4c98b is neutral green
-                     -- #147427 is darker green
-                     -- #ea551c is burnt orange
-                     , normalBorderColor  = "#888888"
-                     , focusedBorderColor = "#ea551c"
-                     , modMask            = modMask'
-                     , borderWidth        = 2
-                     , keys              = newKeys
-                     , mouseBindings     = myMouseBindings
-                     , workspaces        = myWorkspaces
-                     , manageHook = composeAll [
-                         isFullscreen --> doFullFloat
-                         ] <+> manageDocks
-                     , handleEventHook = restoreMinimizedEventHook
-                     }
