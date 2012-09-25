@@ -1,72 +1,94 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, DeriveDataTypeable #-}
-import Control.Monad (msum)
--- import Data.Bits ((.|.))
--- import Data.Ratio
--- import System.IO
 import XMonad
 import XMonad.Actions.CycleWS
+import XMonad.Actions.CycleRecentWS
+import XMonad.Actions.WorkspaceNames
 import XMonad.Config.Gnome
--- import XMonad.Config.Xfce
--- import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.FadeInactive
+import XMonad.Config.Kde
+import XMonad.Config.Xfce
+import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.ICCCMFocus
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
--- import XMonad.Layout
-import XMonad.Layout.BoringWindows
+import XMonad.Hooks.SetWMName
+import XMonad.Hooks.UrgencyHook
+import XMonad.Layout.Groups.Wmii
 import XMonad.Layout.LayoutHints
 import XMonad.Layout.NoBorders
-import XMonad.Layout.Simplest
-import XMonad.Layout.Spacing
--- import XMonad.Operations
+import XMonad.Layout.Tabbed
+import XMonad.Prompt
+import XMonad.Util.Run
+import XMonad.Util.Scratchpad
 import qualified Data.Map as M
 import qualified XMonad.StackSet as W
 
--- Layouts
-layout' = smartBorders $ layoutHints $ avoidStruts $ boringAuto $ spacing 2 $ fair ||| Simplest
-    where
-      fair = Fair delta ratio
-      ratio = 1/2
-      delta = 3/100
+-- constants
+myActiveBG = "#586e75"
+myInactiveBG = "#839496"
+launcher = "/home/alex/bin/akmenu"
+locker = "/usr/bin/slock"
+xmobarCommand = "xmobar"
+themeFont = "xft:DejaVuSans:size=7.5"
+themeHeight = 14
+statusBarFG = "#839496" -- inactive is from Xresources
+statusBarBG = "#fdf6e3"
+myTerminal = "scratchpad"
+-- Who knows?  Maybe I'll go back to dzen someday.
+-- dzenCommand = "dzen2 -x 0 -y -1 -w 900 -ta l -fn 'AK Sans Mono-7.5' -bg '#000000' -dock"
+dzenCommand = "dzen2 -x 0 -y -1 -ta l -w  900 -fn 'AK Sans Mono-7.5' -bg '#000000' -dock"
 
--- A tweak to the Tall layout where the number of windows in the master area is
--- calculated on the fly
-data Fair a = Fair { fairRatio :: !Rational
-                   , fairRatioIncrement :: !Rational }
-                deriving (Show, Read)
-instance LayoutClass Fair a where
-    description _ = "Fair"
-    pureLayout (Fair delta frac) r s = pureLayout (Tall nmaster delta frac) r s
-      where
-        n = length $ W.integrate s
-        nmaster = floor $ fromIntegral n / 2
-    pureMessage (Fair delta frac) m =
-            msum [fmap resize     (fromMessage m)]
-      where resize Shrink             = Fair delta (max 0 $ frac-delta)
-            resize Expand             = Fair delta (min 1 $ frac+delta)
+
+-- not really a constant, but feels like it goes here
+workSpaceName :: [Char] -> String
+workSpaceName x = pad $ case x of
+                          "NSP" -> "🌙"
+                          _     -> x
+
+-- Layouts
+myLayoutHook = smartBorders $ avoidStruts $ wmii shrinkText myTheme
+
+myTheme :: Theme
+myTheme = defaultTheme { fontName = themeFont
+                       , decoHeight = themeHeight
+                       , activeColor = myActiveBG
+                       , activeBorderColor = myActiveBG
+                       , inactiveColor = myInactiveBG
+                       , inactiveBorderColor = myInactiveBG
+                       }
 
 -- Keybindings
-modMask' = mod4Mask
-defKeys    = keys defaultConfig
-delKeys x  = foldr M.delete           (defKeys x) (toRemove x)
-newKeys x  = foldr (uncurry M.insert) (delKeys x) (toAdd    x)
-toAdd x =
-    [ ((modMask x, xK_s), sendMessage NextLayout)
-    , ((modMask x, xK_w), kill)
-    , ((modMask x, xK_j), focusDown)
-    , ((modMask x, xK_k), focusUp)
+myModMask :: KeyMask
+myModMask = mod4Mask
+
+myKeys :: XConfig Layout -> M.Map (ButtonMask, KeySym) (X ())
+myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList
+    [ ((modMask, xK_f), sendMessage NextLayout)
+    , ((modMask, xK_s), groupToTabbedLayout)
+    , ((modMask, xK_d), groupToVerticalLayout)
+    , ((modMask, xK_w), kill)
+    , ((modMask, xK_j), swapDown)
+    , ((modMask, xK_k), swapUp)
+    , ((mod1Mask, xK_j), focusDown)
+    , ((mod1Mask, xK_k), focusUp)
+    , ((modMask, xK_h), moveToGroupUp False)
+    , ((modMask, xK_l), moveToGroupDown False)
+    , ((modMask, xK_a), renameWorkspace defaultXPConfig)
+    , ((modMask, xK_space), scratchpadSpawnAction myConfig)
+    , ((mod1Mask, xK_space), safeSpawnProg launcher)
+    , ((0, 0x1008ff41), safeSpawnProg locker) -- blue button
+    , ((0, 0x1008ff2d), safeSpawnProg locker) -- lock
+    , ((modMask, xK_equal), zoomGroupIn)
+    , ((modMask, xK_minus), zoomGroupOut)
+    , ((modMask, xK_Tab), cycleRecentWS [xK_Super_R, xK_Super_L, xK_VoidSymbol] xK_Tab xK_grave)
     ]
-toRemove XConfig{modMask = modm} =
-    [ (modm              , xK_space ) ]
 
 -- Mouse bindings
+myMouseBindings :: XConfig t -> M.Map (KeyMask, Button) (Window -> X ())
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
-    -- mod-button1, Set the window to floating mode and move by dragging
-    [ ((modMask', button1), (\w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster))
-    -- mod-button3, Set the window to floating mode and resize by dragging
-    , ((modMask', button3), (\w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster))
-    -- cycle through workspaces
-    , ((modMask', button5), nextNonEmptyWS)
-    , ((modMask', button4), prevNonEmptyWS)
+    [ ((myModMask, button1), (\w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster))
+    , ((myModMask, button3), (\w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster))
+    , ((myModMask, button5), nextNonEmptyWS)
+    , ((myModMask, button4), prevNonEmptyWS)
     , ((mod1Mask, button5), nextNonEmptyWS)
     , ((mod1Mask, button4), prevNonEmptyWS)
     ]
@@ -74,18 +96,44 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
       nextNonEmptyWS = \_ -> moveTo Next NonEmptyWS
       prevNonEmptyWS = \_ -> moveTo Prev NonEmptyWS
 
-myLogHook :: X ()
-myLogHook = fadeInactiveLogHook fadeAmount
-    where fadeAmount = 0x99999999
+-- Statusbar
+myDzenPP :: PP
+myDzenPP =  dzenPP { ppLayout   = const ""
+                   , ppTitle    = const ""
+                   , ppHidden   = workSpaceName
+                   , ppCurrent  = dzenColor statusBarFG statusBarBG . workSpaceName
+                   , ppVisible  = workSpaceName
+                   , ppUrgent   = dzenColor "red" "yellow" . workSpaceName
+                   , ppSep      = ""
+                   }
 
--- Gnome-specific
-gnomeManageHook = composeAll ([manageHook gnomeConfig, isFullscreen --> doFullFloat])
-main = xmonad gnomeConfig
-       { manageHook    = gnomeManageHook
-       , modMask       = modMask'
-       , keys          = newKeys
-       , mouseBindings = myMouseBindings
-       , layoutHook    = layout'
-       , logHook       = myLogHook
-       , borderWidth   = 0
-       }
+toggleStrutsKey :: XConfig t -> (KeyMask, KeySym)
+toggleStrutsKey XConfig {XMonad.modMask = modMask} = (modMask, xK_b)
+
+myManageHook = composeAll
+                 [ isFullscreen --> doFullFloat
+                 , className =? "Plasma-desktop" --> doFloat
+                 , scratchpadManageHook (W.RationalRect 0.25 0.25 0.5 0.5)
+                 ]
+
+-- Main
+main :: IO ()
+main = myConfigWithBar >>= xmonad
+--main = xmonad myConfig
+
+baseConfig = defaultConfig
+myConfig = withUrgencyHook NoUrgencyHook $ baseConfig
+               { manageHook         = myManageHook <+> manageHook baseConfig
+               , modMask            = myModMask
+               , keys               = myKeys <+> keys baseConfig
+               , mouseBindings      = myMouseBindings
+               , layoutHook         = myLayoutHook
+               , borderWidth        = 1
+               , focusedBorderColor = statusBarFG
+               , normalBorderColor  = statusBarBG
+               , startupHook        = setWMName "LG3D"
+               , logHook            = takeTopFocus >> setWMName "LG3D"
+               , terminal           = myTerminal
+               , workspaces         = ["1 edit", "2 web", "3", "4"]
+               }
+myConfigWithBar = statusBar dzenCommand myDzenPP toggleStrutsKey myConfig
